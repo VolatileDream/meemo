@@ -159,21 +159,25 @@ class meemo(object):
 	@staticmethod
 	def loop(io_input, io_output, cache_loc=None, delimiter=None, nocache=False):
 
-		with meemo.output(io_output, cache_loc, delimiter, byPassCache=nocache) as memoize:
+		#with meemo.output(io_output, cache_loc, delimiter, byPassCache=nocache) as memoize:
+		with meemo.input(io_input, cache_loc, delimiter, byPassCache=nocache) as memoize:
 
 			read = b"\x00"
 
 			while len(read) > 0:
 
 				# if read is None, in non-blocking and
-				read = io_input.read(1000)
+				#read = io_input.read(1000)
+				read = memoize.read(1000)
 
 				if len(read) is 0:
 					break
+				
+				#written = memoize.write(read)
+				written = io_output.write(read)
 
-				written = memoize.write(read)
-
-			io_input.close()
+			#io_input.close()
+			io_output.close()
 
 
 	def in_cache(self, item):
@@ -279,7 +283,15 @@ class meemo(object):
 
 		blocks = blocks[:-1]
 
-		return blocks
+		data = []
+
+		for b in blocks:
+			if not self.in_cache(b):
+				self.add_to_cache(b)
+				data.append(b)
+				data.append(self.delimiter)
+
+		return b''.join(data)
 
 
 	@onlyIf(readable)
